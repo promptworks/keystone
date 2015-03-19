@@ -16,6 +16,7 @@
 #              performance may be negatively affected.
 
 DEFAULT_DOMAIN_ID = 'default'
+SUNGARD_DOMAIN_ID = 'sungardas.com'
 
 TENANTS = [
     {
@@ -81,6 +82,22 @@ USERS = [
         'enabled': True,
         'tenants': ['bar'],
         'email': 'sna@snl.coom',
+    }, {
+        'id': 'danger_avoid_1',
+        'name': 'sungard@domain.com',
+        'domain_id': SUNGARD_DOMAIN_ID,
+        'password': 'snafu',
+        'enabled': True,
+        'tenants': ['bar'],
+        'email': 'sungard@domain.com',
+    }, {
+        'id': 'danger_avoid_2',
+        'name': 'foo@domain.com',
+        'domain_id': DEFAULT_DOMAIN_ID,
+        'password': 'snafu',
+        'enabled': True,
+        'tenants': ['bar'],
+        'email': 'foo@domain.com',
     }
 ]
 
@@ -114,4 +131,10 @@ DOMAINS = [{'description':
                 ' available on Identity API v2.'),
             'enabled': True,
             'id': DEFAULT_DOMAIN_ID,
-            'name': u'Default'}]
+            'name': u'Default'},
+            {'description':
+            (u'Owns users and tenants (i.e. projects)'
+                ' available on Identity API v2.'),
+            'enabled': True,
+            'id': SUNGARD_DOMAIN_ID,
+            'name': u'Sungard'}]

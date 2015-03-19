@@ -13,10 +13,12 @@
 # under the License.
 
 import sys
-
+import string
 from keystoneclient.common import cms
 from oslo.utils import timeutils
 import six
+from six.moves import urllib
+import webob
 
 from keystone.assignment import controllers as assignment_controllers
 from keystone.common import authorization
@@ -361,7 +363,38 @@ class Auth(controller.V3Controller):
         super(Auth, self).__init__(*args, **kw)
         config.setup_authentication()
 
-    def authenticate_for_token(self, context, auth=None):
+    def sso_auth(self, context, auth=None):
+        if 'origin' in context['query_string']:
+            origin = context['query_string'].get('origin')
+            host = urllib.parse.unquote_plus(origin)
+        else:
+            msg = 'Request must have an origin query parameter'
+            LOG.error(msg)
+            raise exception.ValidationError(msg)
+
+        if host in CONF.federation.trusted_dashboard:
+            auth = {'identity': {'methods': []}}
+            token_id = self.authenticate_for_token(context,
+                                                   auth=auth,
+                                                   renderToken=False)
+            return self.render_html_response(host, token_id)
+        else:
+            msg = '%(host)s is not a trusted dashboard host'
+            msg = msg % {'host': host}
+            LOG.error(msg)
+            raise exception.Unauthorized(msg)
+
+    def render_html_response(self, host, token_id):
+        """Forms an HTML Form from a template with autosubmit."""
+        headers = [('Content-Type', 'text/html')]
+        with open(CONF.federation.sso_callback_template) as template:
+            src = string.Template(template.read())
+        subs = {'host': host, 'token': token_id}
+        body = src.substitute(subs)
+        return webob.Response(body=body, status='200',
+                              headerlist=headers)
+
+    def authenticate_for_token(self, context, auth=None, renderToken=True):
         """Authenticate user and issue a token."""
         include_catalog = 'nocatalog' not in context['query_string']
 
@@ -397,8 +430,11 @@ class Auth(controller.V3Controller):
             if trust:
                 self.trust_api.consume_use(trust['id'])
 
-            return render_token_data_response(token_id, token_data,
-                                              created=True)
+            if renderToken:
+                return render_token_data_response(token_id, token_data,
+                                                  created=True)
+            else:
+                return token_id
         except exception.TrustNotFound as e:
             raise exception.Unauthorized(e)
 

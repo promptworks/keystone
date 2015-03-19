@@ -38,7 +38,6 @@ from keystone.tests import federation_fixtures
 from keystone.tests import mapping_fixtures
 from keystone.tests import test_v3
 
-
 CONF = config.CONF
 LOG = log.getLogger(__name__)
 ROOTDIR = os.path.dirname(os.path.abspath(__file__))

@@ -31,3 +31,11 @@ keystone/tests/tmp/
 keystone/locale/*/LC_MESSAGES/*.mo
 .testrepository/
 *.db
+.idea/.name
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/scopes/scope_settings.xml
+.idea/src.iml
+.idea/vcs.xml
+.idea/workspace.xml

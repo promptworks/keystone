@@ -59,3 +59,9 @@ class Routers(wsgi.RoutersBase):
             path='/auth/domains',
             get_action='get_auth_domains',
             rel=json_home.build_v3_resource_relation('auth_domains'))
+
+        self._add_resource(
+            mapper, auth_controller,
+            path='/auth/OS-FEDERATION/websso/oidc',
+            get_post_action='sso_auth',
+            rel=json_home.build_v3_resource_relation('sso_auth'))

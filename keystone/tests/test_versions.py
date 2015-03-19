@@ -132,6 +132,8 @@ V3_JSON_HOME_RESOURCES_INHERIT_DISABLED = {
         'href': '/auth/projects'},
     json_home.build_v3_resource_relation('auth_domains'): {
         'href': '/auth/domains'},
+    json_home.build_v3_resource_relation('sso_auth'): {
+        'href': '/auth/OS-FEDERATION/websso/oidc'},
     json_home.build_v3_resource_relation('credential'): {
         'href-template': '/credentials/{credential_id}',
         'href-vars': {

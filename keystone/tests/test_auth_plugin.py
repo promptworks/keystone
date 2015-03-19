@@ -13,13 +13,16 @@
 # under the License.
 
 import uuid
-
 import mock
+import os
 
+from six.moves import urllib
 from keystone import auth
 from keystone import exception
 from keystone import tests
-
+from keystone.tests import core
+from keystone.tests.ksfixtures import database
+from keystone.tests import default_fixtures
 
 # for testing purposes only
 METHOD_NAME = 'simple_challenge_response'
@@ -158,6 +161,109 @@ class TestInvalidAuthMethodRegistration(tests.TestCase):
             methods=['keystone.tests.test_auth_plugin.NoMethodAuthPlugin'])
         self.clear_auth_plugin_registry()
         self.assertRaises(ValueError, auth.controllers.load_auth_methods)
+
+
+class TestInferredDomain(tests.TestCase):
+    def setUp(self):
+        self.useFixture(database.Database())
+        super(TestInferredDomain, self).setUp()
+        self.load_backends()
+        self.load_fixtures(default_fixtures)
+        self.subj = auth.plugins.external.InferredDomain()
+
+    # FOO is the username of a member of the default domain
+    def test_when_user_is_found_in_default_domain(self):
+        found_user = self.subj._authenticate("foo@domain.com@ssosite.com", None)
+        self.assertEqual(found_user['name'], "foo@domain.com")
+
+    def test_when_user_is_not_in_expected_format(self):
+        self.assertRaises(exception.Unauthorized,
+                          self.subj._authenticate,
+                          "THIS_IS_THE_WRONG_FORMAT",
+                          None)
+
+    def test_when_remote_user_is_none(self):
+        found_user = self.subj._authenticate(None, None)
+        self.assertEqual(found_user, {})
+
+    # SUNGARD_FOO is the username of a member of a domain that is NOT default
+    def test_when_user_is_found_in_different_domain(self):
+        found_user = self.subj._authenticate(
+            "sungard@domain.com@ssosite.com", None)
+        self.assertEqual(found_user['name'], "sungard@domain.com")
+
+    def test_when_user_is_missing(self):
+        found_user = self.subj._authenticate(
+            "MISSING@domain.com@ssosite.com", None)
+        self.assertEqual(found_user, {})
+
+
+class TestAuthControllersSsoAuth(tests.TestCase):
+    SSO_TEMPLATE_NAME = 'sso_callback_template.html'
+    SSO_TEMPLATE_PATH = os.path.join(core.dirs.etc(), SSO_TEMPLATE_NAME)
+    TRUSTED_DASHBOARD = 'http://horizon.com'
+    ORIGIN = urllib.parse.quote_plus(TRUSTED_DASHBOARD)
+    METHOD_NAME = 'keystone.auth.plugins.external.InferredDomain'
+
+    def setUp(self):
+        self.useFixture(database.Database())
+        super(TestAuthControllersSsoAuth, self).setUp()
+
+        self.load_backends()
+        self.load_fixtures(default_fixtures)
+
+        self.auth_controller = auth.controllers.Auth()
+        self.config_fixture.config(
+            group='federation',
+            trusted_dashboard=[self.TRUSTED_DASHBOARD],
+            sso_callback_template=self.SSO_TEMPLATE_PATH)
+        self.config_overrides
+
+    def config_overrides(self):
+        super(TestAuthControllersSsoAuth, self).config_overrides()
+        method_opts = dict(
+            [
+                ('external', 'keystone.auth.plugins.external.InferredDomain'),
+                ('password', 'keystone.auth.plugins.password.Password'),
+                ('token', 'keystone.auth.plugins.token.Token'),
+            ])
+        self.auth_plugin_config_override(
+            methods=['external', 'password', 'token'],
+            **method_opts)
+
+
+    def test_render_callback_template(self):
+        token_id = uuid.uuid4().hex
+        auth_controller = self.auth_controller
+        resp = auth_controller.render_html_response(self.TRUSTED_DASHBOARD,
+                                                    token_id)
+        self.assertIn(token_id, resp.body)
+        self.assertIn(self.TRUSTED_DASHBOARD, resp.body)
+
+    def test_federated_sso_missing_query(self):
+        context = {'environment': {}, 'query_string': []}
+        self.assertRaises(exception.ValidationError,
+                          self.auth_controller.sso_auth,
+                          context)
+
+    def test_federated_sso_untrusted_dashboard(self):
+        context = {
+            'environment': {},
+            'query_string': {'origin': "I AM NOT TRUSTED"},
+        }
+        self.assertRaises(exception.Unauthorized,
+                          self.auth_controller.sso_auth,
+                          context)
+
+    def test_redirect_from_SSO_login(self):
+        context = {
+            'environment': {
+                'REMOTE_USER': "FOO@ssosite.com"
+            },
+            'query_string': {'origin': self.ORIGIN}
+        }
+        resp = self.auth_controller.sso_auth(context)
+        self.assertIn(self.TRUSTED_DASHBOARD, resp.body)
 
 
 class TestMapped(tests.TestCase):
