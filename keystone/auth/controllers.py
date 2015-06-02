@@ -374,22 +374,23 @@ class Auth(controller.V3Controller):
 
         if host in CONF.federation.trusted_dashboard:
             auth = {'identity': {'methods': []}}
-            token_id = self.authenticate_for_token(context,
+            token_id, token_data = self.authenticate_for_token(context,
                                                    auth=auth,
                                                    renderToken=False)
-            return self.render_html_response(host, token_id)
+            domain_name = token_data['token']['project']['domain']['name']
+            return self.render_html_response(host, token_id, domain_name)
         else:
             msg = '%(host)s is not a trusted dashboard host'
             msg = msg % {'host': host}
             LOG.error(msg)
             raise exception.Unauthorized(msg)
 
-    def render_html_response(self, host, token_id):
+    def render_html_response(self, host, token_id, domain_name):
         """Forms an HTML Form from a template with autosubmit."""
         headers = [('Content-Type', 'text/html')]
         with open(CONF.federation.sso_callback_template) as template:
             src = string.Template(template.read())
-        subs = {'host': host, 'token': token_id}
+        subs = {'host': host, 'token': token_id, 'domain_name': domain_name}
         body = src.substitute(subs)
         return webob.Response(body=body, status='200',
                               headerlist=headers)
@@ -434,7 +435,7 @@ class Auth(controller.V3Controller):
                 return render_token_data_response(token_id, token_data,
                                                   created=True)
             else:
-                return token_id
+                return (token_id, token_data)
         except exception.TrustNotFound as e:
             raise exception.Unauthorized(e)
 
