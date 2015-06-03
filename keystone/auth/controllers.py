@@ -377,7 +377,7 @@ class Auth(controller.V3Controller):
             token_id, token_data = self.authenticate_for_token(context,
                                                    auth=auth,
                                                    renderToken=False)
-            domain_name = token_data['token']['project']['domain']['name']
+            domain_name = token_data['token']['user']['domain']['name']
             return self.render_html_response(host, token_id, domain_name)
         else:
             msg = '%(host)s is not a trusted dashboard host'
