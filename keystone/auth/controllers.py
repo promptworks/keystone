@@ -374,23 +374,34 @@ class Auth(controller.V3Controller):
 
         if host in CONF.federation.trusted_dashboard:
             auth = {'identity': {'methods': []}}
-            token_id, token_data = self.authenticate_for_token(context,
-                                                   auth=auth,
-                                                   renderToken=False)
-            domain_name = token_data['token']['user']['domain']['name']
-            return self.render_html_response(host, token_id, domain_name)
+            token_id = None
+            domain_name = None
+            error_msg = ''
+            try:
+                token_id, token_data = self.authenticate_for_token(context,
+                                                    auth=auth,
+                                                    renderToken=False)
+                domain_name = token_data['token']['user']['domain']['name']
+            except exception.Unauthorized:
+                error_msg = 'User not found. Please contact your administrator.'
+            return self.render_html_response(host, token_id, domain_name, error_msg)
         else:
             msg = '%(host)s is not a trusted dashboard host'
             msg = msg % {'host': host}
             LOG.error(msg)
             raise exception.Unauthorized(msg)
 
-    def render_html_response(self, host, token_id, domain_name):
+    def render_html_response(self, host, token_id, domain_name, error_msg):
         """Forms an HTML Form from a template with autosubmit."""
         headers = [('Content-Type', 'text/html')]
         with open(CONF.federation.sso_callback_template) as template:
             src = string.Template(template.read())
-        subs = {'host': host, 'token': token_id, 'domain_name': domain_name}
+        subs = {
+            'host': host,
+            'token': token_id,
+            'domain_name': domain_name,
+            'error_msg': error_msg,
+        }
         body = src.substitute(subs)
         return webob.Response(body=body, status='200',
                               headerlist=headers)
