@@ -98,14 +98,6 @@ USERS = [
         'enabled': True,
         'tenants': ['bar'],
         'email': 'foo@domain.com',
-    }, {
-        'id': 'danger_disabled',
-        'name': 'disabled-user@domain.com',
-        'domain_id': DEFAULT_DOMAIN_ID,
-        'password': 'snafu',
-        'enabled': False,
-        'tenants': ['bar'],
-        'email': 'disabled-user@domain.com',
     }
 ]
 

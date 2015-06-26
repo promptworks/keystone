@@ -107,10 +107,8 @@ class InferredDomain(Base):
         hints = driver_hints.Hints()
         hints.add_filter('name', email)
         users = self.identity_api.list_users(hints=hints)
-        import pdb; pdb.set_trace()
+
         if len(users) == 1:
-            # verify the user is enabled
-            # self._assert_user_is_enabled(users[0])
             return users[0]
         elif len(users) > 1:
             raise exception.Unauthorized(
@@ -127,16 +125,6 @@ class InferredDomain(Base):
         else:
             raise exception.Unauthorized(
                 _('Invalid REMOTE_USER Format: %s' % remote_user))
-
-    def _assert_user_is_enabled(self, user_ref):
-        try:
-            self.identity_api.assert_user_enabled(
-                user_id=user_ref['id'],
-                user=user_ref)
-        except AssertionError as e:
-            LOG.warning(e)
-            six.reraise(exception.Unauthorized, exception.Unauthorized(e),
-                        sys.exc_info()[2])
 
 @dependency.requires('assignment_api', 'identity_api')
 class KerberosDomain(Domain):
