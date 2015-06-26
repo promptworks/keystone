@@ -197,6 +197,17 @@ class TestInferredDomain(tests.TestCase):
             "MISSING@domain.com@ssosite.com", None)
         self.assertEqual(found_user, {})
 
+    def test_when_user_is_disabled(self):
+        found_user = self.subj._authenticate("disabled-user@domain.com", None)
+        # self.assertEqual(found_user['name'], "sungard@domain.com")
+        # self.assertRaises(
+        #     exception.Unauthorized,
+        #     self.subj._authenticate,
+        #     "disabled-user@domain.com",
+        #     None
+        # )
+
+
 
 class TestAuthControllersSsoAuth(tests.TestCase):
     SSO_TEMPLATE_NAME = 'sso_callback_template.html'
