@@ -21,7 +21,7 @@ ldappool>=1.0 # MPL
 
 # Required for federation extension (although used only for federating multiple
 # Keystones)
-pysaml2
+pysaml2==2.4.0
 
 # Testing
 # computes code coverage percentages
