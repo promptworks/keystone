@@ -159,7 +159,8 @@ class V3TokenDataHelper(object):
         project_ref = self.assignment_api.get_project(project_id)
         filtered_project = {
             'id': project_ref['id'],
-            'name': project_ref['name']}
+            'name': project_ref['name'],
+            'managed': project_ref.get('managed', False)}
         filtered_project['domain'] = self._get_filtered_domain(
             project_ref['domain_id'])
         return filtered_project
@@ -308,6 +309,9 @@ class V3TokenDataHelper(object):
                                 'domain_id': token_domain_id}
                 LOG.debug(msg)
                 raise exception.Unauthorized(msg)
+
+            if 'project' in token_data and token_data['project'].get('managed'):
+                filtered_roles.append({'id': 'managed', 'name': 'managed'})
 
             token_data['roles'] = filtered_roles
 
