@@ -31,4 +31,4 @@ dogpile.cache>=0.5.3,<=0.5.6
 jsonschema>=2.0.0,<3.0.0
 # pycadf tries to pull in eventlet
 # pycadf>=0.5.1
-posix_ipc<=0.9.9
+posix_ipc>=0.9.9
