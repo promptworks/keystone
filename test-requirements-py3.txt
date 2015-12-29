@@ -43,7 +43,6 @@ WebTest>=2.0,<=2.0.18
 
 discover
 python-subunit>=0.0.18,<=1.0.0
-testrepository>=0.0.18,<=0.0.20
 testtools>=0.9.34,!=1.4.0,<=1.5.0
 testscenarios>=0.4
 
