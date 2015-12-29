@@ -3,7 +3,7 @@
 # process, which may cause wedges in the gate later.
 
 # keystone dependencies
-pbr>=0.6,!=0.7,<1.0
+pbr>=1.6
 WebOb>=1.2.3,<=1.3.1
 eventlet>=0.15.1,<=0.15.2
 greenlet>=0.3.2,<=0.4.2
